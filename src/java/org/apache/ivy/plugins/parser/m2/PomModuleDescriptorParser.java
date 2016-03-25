@@ -122,6 +122,10 @@ public final class PomModuleDescriptorParser implements ModuleDescriptorParser {
             domReader.setProperty("project.parent.version", domReader.getParentVersion());
             domReader.setProperty("project.parent.groupId", domReader.getParentGroupId());
 
+            Message.debug("parent.groupId: " + domReader.getParentGroupId());
+            Message.debug("parent.artifactId: " + domReader.getParentArtifactId());
+            Message.debug("parent.version: " + domReader.getParentVersion());
+
             Map pomProperties = domReader.getPomProperties();
             for (Iterator iter = pomProperties.entrySet().iterator(); iter.hasNext();) {
                 Map.Entry prop = (Map.Entry) iter.next();
