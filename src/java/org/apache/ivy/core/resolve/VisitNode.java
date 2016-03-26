@@ -37,7 +37,7 @@ import org.apache.ivy.util.Checks;
 /**
  * A visit node is an object used to represent one visit from one parent on an {@link IvyNode} of
  * the dependency graph. During dependency resolution, the {@link ResolveEngine} visits nodes of the
- * depency graph following the dependencies, thus the same node can be visited several times, if it
+ * dependency graph following the dependencies, thus the same node can be visited several times, if it
  * is requested from several module. In this case you will have one VisitNode per parent and per
  * root module configuration. Thus VisitNode stores data specific to the visit:
  * <ul>
@@ -426,7 +426,7 @@ public class VisitNode {
     public boolean isCircular() {
         if (isCircular == null) {
             if (parent != null) {
-                isCircular = Boolean.FALSE; // asumme it's false, and see if it isn't by checking
+                isCircular = Boolean.FALSE; // assume it's false, and see if it isn't by checking
                 // the parent path
                 for (VisitNode ancestor : parent.getPath()) {
                     if (getId().getModuleId().equals(ancestor.getId().getModuleId())) {
