@@ -4454,6 +4454,47 @@ public class ResolveTest extends TestCase {
             "jar").exists());
     }
 
+    public void testErrorResolveMaven2ParentPomWithCycle() throws Exception {
+        // IVY-1545
+        // test6 has parent parent4, parent4 parent is parent5, parent5 parent is parent4, a cycle.
+        Ivy ivy = new Ivy();
+        ivy.configure(new File("test/repositories/parentPom/ivysettings.xml"));
+        ivy.getSettings().setDefaultResolver("parentChain");
+
+        try {
+            ivy.resolve(
+                new File("test/repositories/parentPom/org/apache/dm/test6/1.0/test6-1.0.pom"),
+                getResolveOptions(new String[] {"*"}));
+
+            // don't expect to get here, should suffer StackOverflowError if cycle is not detected
+            fail("Expected CircularDependencyException from parent cycle detection");
+        } catch (CircularDependencyException e) {
+            // ok
+            assertEquals("org.apache.dm#parent4;1.0->org.apache.dm#parent5;1.0", e.getMessage());
+        }
+    }
+
+    public void testErrorResolveMaven2SelfAsParent() throws Exception {
+        // IVY-1545
+        // test7 has parent == self
+        Ivy ivy = new Ivy();
+        ivy.configure(new File("test/repositories/parentPom/ivysettings.xml"));
+        ivy.getSettings().setDefaultResolver("parentChain");
+
+        try {
+            ivy.resolve(
+                new File("test/repositories/parentPom/org/apache/dm/test7/1.0/test7-1.0.pom"),
+                getResolveOptions(new String[] {"*"}));
+
+            // don't expect to get here, should suffer StackOverflowError if cycle is not detected
+            fail("Expected CircularDependencyException from parent cycle detection");
+        } catch (CircularDependencyException e) {
+            // ok
+            assertEquals("org.apache.dm#test7;1.0", e.getMessage());
+        }
+    }
+
+
     public void testResolveMaven2ParentPomWithNamespace() throws Exception {
         // Cfr IVY-1186
         Ivy ivy = new Ivy();

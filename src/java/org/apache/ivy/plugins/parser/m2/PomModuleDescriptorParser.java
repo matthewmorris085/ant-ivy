@@ -23,7 +23,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +44,7 @@ import org.apache.ivy.core.resolve.ResolveData;
 import org.apache.ivy.core.resolve.ResolveEngine;
 import org.apache.ivy.core.resolve.ResolveOptions;
 import org.apache.ivy.core.resolve.ResolvedModuleRevision;
+import org.apache.ivy.plugins.circular.CircularDependencyException;
 import org.apache.ivy.plugins.namespace.NameSpaceHelper;
 import org.apache.ivy.plugins.parser.ModuleDescriptorParser;
 import org.apache.ivy.plugins.parser.ParserSettings;
@@ -68,6 +71,8 @@ public final class PomModuleDescriptorParser implements ModuleDescriptorParser {
 
     private static final PomModuleDescriptorParser INSTANCE = new PomModuleDescriptorParser();
 
+    private static final String PARENT_MAP_KEY = PomModuleDescriptorParser.class.getName() + ".parentMap";
+    
     public static PomModuleDescriptorParser getInstance() {
         return INSTANCE;
     }
@@ -116,6 +121,13 @@ public final class PomModuleDescriptorParser implements ModuleDescriptorParser {
                 ivySettings);
 
         try {
+            final IvyContext ivyContext = IvyContext.pushNewCopyContext();
+            HashSet<ModuleRevisionId> parents = (HashSet<ModuleRevisionId>) ivyContext.get(PARENT_MAP_KEY);
+            if (parents == null) {
+                parents = new LinkedHashSet<ModuleRevisionId>();
+                ivyContext.set(PARENT_MAP_KEY, parents);
+            }
+            
             PomReader domReader = new PomReader(descriptorURL, res);
             domReader.setProperty("parent.version", domReader.getParentVersion());
             domReader.setProperty("parent.groupId", domReader.getParentGroupId());
@@ -140,6 +152,14 @@ public final class PomModuleDescriptorParser implements ModuleDescriptorParser {
                 ModuleRevisionId parentModRevID = ModuleRevisionId.newInstance(
                     domReader.getParentGroupId(), domReader.getParentArtifactId(),
                     domReader.getParentVersion());
+                
+                // check for cycles
+                if (parents.contains(parentModRevID)) {
+                    throw new CircularDependencyException(parents);
+                } else {
+                    parents.add(parentModRevID);
+                }
+                
                 ResolvedModuleRevision parentModule = parseOtherPom(ivySettings, parentModRevID);
                 if (parentModule != null) {
                     parentDescr = parentModule.getDescriptor();
@@ -308,6 +328,8 @@ public final class PomModuleDescriptorParser implements ModuleDescriptorParser {
             }
         } catch (SAXException e) {
             throw newParserException(e);
+        } finally {
+            IvyContext.popContext();
         }
 
         return mdBuilder.getModuleDescriptor();

@@ -17,6 +17,8 @@
  */
 package org.apache.ivy.plugins.circular;
 
+import java.util.Collection;
+
 import org.apache.ivy.core.module.id.ModuleRevisionId;
 
 /**
@@ -25,6 +27,10 @@ import org.apache.ivy.core.module.id.ModuleRevisionId;
 
 public class CircularDependencyException extends RuntimeException {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 670272039106237360L;
     private ModuleRevisionId[] mrids;
 
     /**
@@ -36,6 +42,10 @@ public class CircularDependencyException extends RuntimeException {
         this.mrids = mrids;
     }
 
+    public CircularDependencyException(final Collection<ModuleRevisionId> mrids) {
+        this(mrids.toArray(new ModuleRevisionId[mrids.size()]));
+    }
+    
     public ModuleRevisionId[] getPath() {
         return this.mrids;
     }
